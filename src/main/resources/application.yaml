@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: AuthorizationServer
+server:
+  port:
+    9000
