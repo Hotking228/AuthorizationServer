@@ -13,6 +13,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,10 +40,12 @@ import java.util.UUID;
 public class AuthorizationServerConfig {
 
     @Bean
+    @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
         throws Exception{
         return http.authorizeHttpRequests(requests -> requests
-                .anyRequest().authenticated())
+                        .requestMatchers("/login", "/error").permitAll()
+                        .anyRequest().authenticated())
                 .formLogin(Customizer.withDefaults())
                 .build();
     }
@@ -77,6 +80,8 @@ public class AuthorizationServerConfig {
         authorizationServerFilterChain(HttpSecurity http) throws Exception{
         OAuth2AuthorizationServerConfiguration
                 .applyDefaultSecurity(http);
+        http.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+
         return http
                 .formLogin(Customizer.withDefaults())
                 .build();
@@ -108,6 +113,15 @@ public class AuthorizationServerConfig {
         Наше приложение создает JWT - JSON Web Token, который служит для предоставления доступа клиенту
     после аутентификации
         JWK - JSON Web Key - ключ для создания подписи для JWT
+     */
+
+    /*
+        JWT в себе содержит signature - цифровую подпись, которая формируется на сервере(jwk),
+       эта сигнатура формируется как условная хеш-функция от данных в самом jwt(payload), разность данных
+       обеспечивает временная метка, которая так же обеспечивает время жизни токена, относительно
+       сервера авторизации, время на сервере ресурсов и авторизации синхронизировано и когда сервер ресурсов
+       проверяет подпись токена он так же проверяет время и получает хеш функцию от данных токена, если
+       совпадают полученная сигнатура и сигнатура из jwt -> jwt валидный.
      */
 
     @Bean
